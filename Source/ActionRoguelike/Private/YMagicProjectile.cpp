@@ -5,38 +5,57 @@
 #include "Components/SphereComponent.h"
 #include "GameFramework//ProjectileMovementComponent.h"
 #include "Particles/ParticleSystemComponent.h"
-
+#include "Components/AudioComponent.h"
+#include "YGameplayFunctionLibrary.h"
 
 // Sets default values
 AYMagicProjectile::AYMagicProjectile()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	ExplodeEffectComp = CreateDefaultSubobject<UParticleSystemComponent>("ExplodeEffectComp");
+	ExplodeEffectComp->bAutoActivate = false;
+	ExplodeEffectComp->SetupAttachment(RootComponent);
 
-	SphereComp = CreateDefaultSubobject<USphereComponent>("SphereComp");
-	SphereComp->SetCollisionProfileName("Projectile");//Projectile为预设好的碰撞
-	RootComponent = SphereComp;
+	MovementComp->InitialSpeed = 2000.0f;
+	Damage = 20.0f;
+}
 
-	EffectComp = CreateDefaultSubobject<UParticleSystemComponent>("EffectComp");
-	EffectComp->SetupAttachment(SphereComp);
+void AYMagicProjectile::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && OtherActor != GetInstigator())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("The Projectile %s damage the %s, at game time %f"), *GetNameSafe(this), *GetNameSafe(OtherActor), GetWorld()->TimeSeconds);
+		if (UYGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor, Damage, SweepResult))
+		{
+			Explode();
+		}
+	}
+}
 
-	MovementComp = CreateDefaultSubobject<UProjectileMovementComponent>("MovementComp");
-	MovementComp->InitialSpeed = 1000.0f;
-	MovementComp->bRotationFollowsVelocity = true;
-	MovementComp->bInitialVelocityInLocalSpace = true;
+void AYMagicProjectile::OnActorHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	UE_LOG(LogTemp, Warning, TEXT("  The Projectile %s hit the %s and explode"), *GetNameSafe(this), *GetNameSafe(OtherActor));
+	Explode();
+	
 }
 
 // Called when the game starts or when spawned
 void AYMagicProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	SphereComp->OnComponentBeginOverlap.AddDynamic(this, &AYMagicProjectile::OnComponentBeginOverlap);
+	SphereComp->OnComponentHit.AddDynamic(this, &AYMagicProjectile::OnActorHit);
+
+	this->SetLifeSpan(20.0f);
 }
 
-// Called every frame
-void AYMagicProjectile::Tick(float DeltaTime)
+void AYMagicProjectile::Explode()
 {
-	Super::Tick(DeltaTime);
+	Super::Explode();
+	
+	ExplodeEffectComp->ActivateSystem(true);
 
+	FTimerHandle TimerHandle_Die;
+	GetWorldTimerManager().SetTimer(TimerHandle_Die, this, &AYMagicProjectile::Die, 1.0f);
 }
 

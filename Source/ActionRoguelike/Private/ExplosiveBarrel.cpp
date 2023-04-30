@@ -35,7 +35,7 @@ void AExplosiveBarrel::PostInitializeComponents()
 
 void AExplosiveBarrel::OnActorHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	ForceComp->FireImpulse();
+	Explode();
 
 	// log信息的category，log/warning/error等表示日志的详细程度，打印的文字内容
 
@@ -45,4 +45,9 @@ void AExplosiveBarrel::OnActorHit(UPrimitiveComponent* HitComp, AActor* OtherAct
 	FString CombStr = FString::Printf(TEXT("Hit at %s"), *Hit.ImpactPoint.ToString());
 	// 获取世界，位置，打印的内容，需要attach的actor，颜色，持续时间，是否有影子
 	DrawDebugString(GetWorld(), Hit.ImpactPoint, CombStr, nullptr, FColor::Green, 2.0f, true);
+}
+
+void AExplosiveBarrel::Explode()
+{
+	ForceComp->FireImpulse();
 }

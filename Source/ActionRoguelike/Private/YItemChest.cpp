@@ -7,8 +7,6 @@
 // Sets default values
 AYItemChest::AYItemChest()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
 
 	BaseMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BaseMeshComp"));
 	RootComponent = BaseMeshComp;
@@ -17,20 +15,6 @@ AYItemChest::AYItemChest()
 	LidMeshComp->SetupAttachment(BaseMeshComp);
 
 	TargetPitch = 110.0f;
-}
-
-// Called when the game starts or when spawned
-void AYItemChest::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
-// Called every frame
-void AYItemChest::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 }
 
 void AYItemChest::Interact_Implementation(APawn* InstigatorPawn)

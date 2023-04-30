@@ -2,16 +2,11 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "YProjectile.h"
 #include "YMagicProjectile.generated.h"
 
-class USphereComponent;
-class UProjectileMovementComponent;
-class UParticleSystemComponent;
-
 UCLASS()
-class ACTIONROGUELIKE_API AYMagicProjectile : public AActor
+class ACTIONROGUELIKE_API AYMagicProjectile : public AYProjectile
 {
 	GENERATED_BODY()
 	
@@ -21,20 +16,21 @@ public:
 
 protected:
 
-	UPROPERTY(VisibleAnywhere)
-	USphereComponent* SphereComp;
+	UPROPERTY(EditDefaultsOnly)
+	UParticleSystemComponent* ExplodeEffectComp;
 
-	UPROPERTY(VisibleAnywhere)
-	UProjectileMovementComponent* MovementComp;
+	virtual void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, 
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 
-	UPROPERTY(VisibleAnywhere)
-	UParticleSystemComponent* EffectComp;
+	virtual void OnActorHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+		FVector NormalImpulse, const FHitResult& Hit) override;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	void Explode() override;
+
+	UPROPERTY(EditDefaultsOnly)
+	float Damage;
 
 };
