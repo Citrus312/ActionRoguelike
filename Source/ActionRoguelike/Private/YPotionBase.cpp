@@ -25,11 +25,6 @@ void AYPotionBase::PostInitializeComponents()
 	Super::PostInitializeComponents();
 }
 
-void AYPotionBase::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, /*触发时间的主体，通常是控制的人 */ UPrimitiveComponent* OterComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	
-}
-
 void AYPotionBase::ShowPowerup()
 {
 	SetPowerupState(true);

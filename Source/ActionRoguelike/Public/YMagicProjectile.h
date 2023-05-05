@@ -3,7 +3,10 @@
 #pragma once
 
 #include "YProjectile.h"
+#include "GameplayTagContainer.h"
 #include "YMagicProjectile.generated.h"
+
+class UYActionEffect;
 
 UCLASS()
 class ACTIONROGUELIKE_API AYMagicProjectile : public AYProjectile
@@ -30,7 +33,22 @@ protected:
 
 	void Explode() override;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly,Category = "Damage")
 	float Damage;
+
+	UPROPERTY(EditDefaultsOnly,Category = "Damage")
+	FGameplayTag ParryTag;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	TSubclassOf<UYActionEffect> BurningActionClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects|Shake")
+	TSubclassOf<UCameraShake> ImpactShake;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects|Shake")
+	float ImpactShakeInnerRadius;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects|Shake")
+	float ImpactShakeOuterRadius;
 
 };

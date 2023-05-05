@@ -14,6 +14,7 @@
 #include "Particles/ParticleSystem.h"
 #include "AI/YAICharacter.h"
 #include "EngineUtils.h"
+#include "YActionComponent.h"
 
 // Sets default values
 AYCharacter::AYCharacter()
@@ -34,13 +35,12 @@ AYCharacter::AYCharacter()
 
 	AttributeComp = CreateDefaultSubobject<UYAttributeComponent>("AttributeComp");
 
+	ActionComp = CreateDefaultSubobject<UYActionComponent>("ActionComp");
+
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	bUseControllerRotationYaw = false;
 
-	SpawnLocationName_PrimaryAttack = "Muzzle_01";
-	SpawnLocationName_AdvancedAttack = "Muzzle_03";
-	SpawnLocationName_Dash = "Muzzle_01";
 }
 
 // Called when the game starts or when spawned
@@ -73,6 +73,9 @@ void AYCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AYCharacter::Jump);
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AYCharacter::SprintStart);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AYCharacter::SprintStop);
+
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &AYCharacter::PrimaryAttack);
 	PlayerInputComponent->BindAction("AdvancedAttack", IE_Pressed, this, &AYCharacter::AdvancedAttack);
 	PlayerInputComponent->BindAction("Dash", IE_Pressed, this, &AYCharacter::Dash);
@@ -120,103 +123,46 @@ void AYCharacter::MoveRight(float AxisValue)
 	}
 }
 
-//获取攻击的TransformMatrix
-void AYCharacter::GetAttackTM(FTransform& SpawnTM, FName SpawnLocationName)
+void AYCharacter::SprintStart()
 {
-	FVector HandLocation = GetMesh()->GetSocketLocation(SpawnLocationName);
-	FVector CameraLocation = GetWorld()->GetFirstPlayerController()->PlayerCameraManager->GetCameraLocation();
-	FVector TargetLocation = CameraLocation + (GetControlRotation().Vector() * AttackDistance);
-
-	FCollisionObjectQueryParams ObjectQueryParams;
-	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);//检测静态物体
-
-	//对目标方向进行光线追踪，检测物体
-	FHitResult Hit;
-	FRotator AttackRotation;
-	bool bBlockingHit = GetWorld()->LineTraceSingleByObjectType(Hit, CameraLocation, TargetLocation, ObjectQueryParams);
-
-	if (bBlockingHit)
-	{
-		//若有物体，对作用点方向进行攻击
-		UE_LOG(LogTemp, Log, TEXT("The attack target found is %s, at game time %f"), *GetNameSafe(Hit.GetActor()), GetWorld()->TimeSeconds);
-		FVector HitPoint = Hit.ImpactPoint;
-		AttackRotation = UKismetMathLibrary::FindLookAtRotation(HandLocation, HitPoint);
-	}
-	else
-	{
-		//若无物体，对默认方向进行攻击
-		UE_LOG(LogTemp, Log, TEXT("There is nothing found."));
-		AttackRotation = UKismetMathLibrary::FindLookAtRotation(HandLocation, TargetLocation);
-	}
-
-	SpawnTM = FTransform(AttackRotation, HandLocation);
+	ActionComp->StartActionByName(this, "Sprint");
 }
 
-//发射炮弹
-void AYCharacter::SpawnAttackProjectile(TSubclassOf<AActor> ProjectileClass, FName SpawnLocationName)
+void AYCharacter::SprintStop()
 {
-	//发射特效
-	UGameplayStatics::SpawnEmitterAttached(CastingEffect, GetMesh(), SpawnLocationName, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget);
-
-	//计算
-	FTransform SpawnTM;
-	GetAttackTM(SpawnTM, SpawnLocationName);
-
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SpawnParams.Instigator = this;
-
-	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+	ActionComp->StopActionByName(this, "Sprint");
 }
 
 //初级攻击
 void AYCharacter::PrimaryAttack()
 {
-	PlayAnimMontage(PrimaryAttackAnim);
-
-	//计时
-	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &AYCharacter::PrimaryAttack_TimeElapsed, 0.2f);
-
-}
-
-//计时触发
-void AYCharacter::PrimaryAttack_TimeElapsed()
-{
-	SpawnAttackProjectile(PrimaryProjectileClass, SpawnLocationName_PrimaryAttack);
+	ActionComp->StartActionByName(this, "PrimaryAttack");
 }
 
 //高级攻击
 void AYCharacter::AdvancedAttack()
 {
-	PlayAnimMontage(AdvancedAttackAnim);
-
-	//计时
-	GetWorldTimerManager().SetTimer(TimerHandle_AdvancedAttack, this, &AYCharacter::AdvancedAttack_TimeElapsed, 0.2f);
-}
-
-//计时触发
-void AYCharacter::AdvancedAttack_TimeElapsed()
-{
-	SpawnAttackProjectile(AdvancedProjectileClass, SpawnLocationName_AdvancedAttack);
+	if (AttributeComp->IsRageMax())
+	{
+		if (ActionComp->StartActionByName(this, "AdvancedAttack"))
+		{
+			AttributeComp->ClearRage();
+		}
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, "Rage Not Enough");
+	}
 }
 
 //传送
 void AYCharacter::Dash()
 {
-	PlayAnimMontage(DashAnim);
-
-	//计时
-	GetWorldTimerManager().SetTimer(TimerHandle_Dash, this, &AYCharacter::Dash_TimeElapsed, 0.2f);
-}
-
-//计时触发
-void AYCharacter::Dash_TimeElapsed()
-{
-	SpawnAttackProjectile(DashProjectileClass, SpawnLocationName_Dash);
+	ActionComp->StartActionByName(this, "Dash");
 }
 
 void AYCharacter::PrimaryInteract()
-{
+{ 
 	if (InteractionComp)
 	{
 		InteractionComp->PrimaryInteract();
@@ -228,8 +174,11 @@ void AYCharacter::OnHealthChanged(AActor* InstigatorActor, UYAttributeComponent*
 {
 	if (Delta < 0.0f)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Character Flash"));
+		//UE_LOG(LogTemp, Warning, TEXT("Character Flash"));
 		GetMesh()->SetScalarParameterValueOnMaterials("TimeToHit", GetWorld()->TimeSeconds);
+		
+		AttributeComp->AddRage(Delta);
+
 		if (NewHealth <= 0.0f)
 		{
 			APlayerController* PC = Cast<APlayerController>(GetController());

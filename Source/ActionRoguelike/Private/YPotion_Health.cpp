@@ -2,28 +2,31 @@
 
 
 #include "YPotion_Health.h"
+#include "YPlayerState.h"
 
 AYPotion_Health::AYPotion_Health()
 {
 	HealthRecovery = 50.0f;
+
+	CreditCost = 50;
 }
 
-void AYPotion_Health::PostInitializeComponents()
+void AYPotion_Health::Interact_Implementation(APawn* InstigatorPawn)
 {
-	Super::PostInitializeComponents();
-	SphereComp->OnComponentBeginOverlap.AddDynamic(this, &AYPotion_Health::OnComponentBeginOverlap);
-}
-
-void AYPotion_Health::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OterComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (OtherActor)
+	if (InstigatorPawn)
 	{
-		UYAttributeComponent* AttributeComp = Cast<UYAttributeComponent>(OtherActor->GetComponentByClass(UYAttributeComponent::StaticClass()));
-		if (AttributeComp)
+		UYAttributeComponent* AttributeComp = UYAttributeComponent::GetAttributes(InstigatorPawn);
+		if (ensure(AttributeComp))
 		{
-			HideAndCooldownPowerup();
-			ConsumeAudioComp->Activate(true);
-			AttributeComp->ApplyHealthChange(this, HealthRecovery);
+			if (AYPlayerState* PS = InstigatorPawn->GetPlayerState<AYPlayerState>())
+			{
+				if (PS->RemoveCredits(CreditCost))
+				{
+					HideAndCooldownPowerup();
+					ConsumeAudioComp->Activate(true);
+					AttributeComp->ApplyHealthChange(this, HealthRecovery);
+				}
+			}
 		}
 	}
 }

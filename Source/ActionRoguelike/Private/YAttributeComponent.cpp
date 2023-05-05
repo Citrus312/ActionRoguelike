@@ -12,6 +12,9 @@ UYAttributeComponent::UYAttributeComponent()
 {
 	HealthMax = 120.0f;
 	Health = HealthMax;
+	RageMax = 10.0f;
+	Rage = 0.0f;
+	RageConvertRatio = 0.25f;
 }
 
 UYAttributeComponent* UYAttributeComponent::GetAttributes(AActor* FromActor)
@@ -21,6 +24,28 @@ UYAttributeComponent* UYAttributeComponent::GetAttributes(AActor* FromActor)
 		return Cast<UYAttributeComponent>(FromActor->GetComponentByClass(UYAttributeComponent::StaticClass()));
 	}
 	return nullptr;
+}
+
+bool UYAttributeComponent::AddRage(float Damage)
+{
+	if (Damage < 0.0f)
+	{
+		Damage = abs(Damage);
+		float Delta = round(Damage * RageConvertRatio);
+		Rage = FMath::Clamp(Rage + Delta, 0.0f, RageMax);
+		return true;
+	}
+	return false;
+}
+
+bool UYAttributeComponent::IsRageMax() const
+{
+	return Rage == RageMax;
+}
+
+void UYAttributeComponent::ClearRage()
+{
+	Rage = 0.0f;
 }
 
 bool UYAttributeComponent::IsAlive() const
@@ -51,6 +76,11 @@ bool UYAttributeComponent::IsActorAlive(AActor* FromActor)
 bool UYAttributeComponent::ApplyHealthChange(AActor* Instigator, float Delta)
 {
 	if (!GetOwner()->CanBeDamaged() && Delta < 0.0f)
+	{
+		return false;
+	}
+
+	if (!IsAlive())
 	{
 		return false;
 	}

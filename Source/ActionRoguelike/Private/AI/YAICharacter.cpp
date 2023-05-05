@@ -10,6 +10,7 @@
 #include "YWorldUserWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "YActionComponent.h"
 
 // Sets default values
 AYAICharacter::AYAICharacter()
@@ -17,6 +18,8 @@ AYAICharacter::AYAICharacter()
     AttributeComp = CreateDefaultSubobject<UYAttributeComponent>("AttributeComp");
 
     PawnSensingComp = CreateDefaultSubobject<UPawnSensingComponent>("PawnSensingComp");
+
+    ActionComp = CreateDefaultSubobject<UYActionComponent>("ActionComp");
 
     AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
@@ -44,18 +47,8 @@ void AYAICharacter::OnHealthChanged(AActor* InstigatorActor, UYAttributeComponen
         }
 
         //HealthBar
-        if (ActiveHealthBar == nullptr)
-        {
-            ActiveHealthBar = CreateWidget<UYWorldUserWidget>(GetWorld(), HealthBarWidgetClass);
-            if (ActiveHealthBar)
-            {
-                ActiveHealthBar->AttachedActor = this;
-                ActiveHealthBar->AddToViewport();
-            }
-        }
+        ShowHealthBar();
         
-        
-
         //flash
         GetMesh()->SetScalarParameterValueOnMaterials(TimeToHitParaName, GetWorld()->TimeSeconds);
 
@@ -86,9 +79,38 @@ void AYAICharacter::SetTargetActor(AActor* NewTarget)
     AAIController* AIC = Cast<AAIController>(GetController());
     if (ensure(AIC))
     {
+        if (AIC->GetBlackboardComponent()->GetValueAsObject("TargetActor") == nullptr)
+        {
+            ShowPlayerSpottedWidget();
+        }
         AIC->GetBlackboardComponent()->SetValueAsObject("TargetActor", NewTarget);
 
-        DrawDebugString(GetWorld(), GetActorLocation(), "PLAYER SPOTTED", nullptr, FColor::White, 4.0f, true);
+    }
+}
+
+void AYAICharacter::ShowHealthBar()
+{
+    if (ActiveHealthBar == nullptr)
+    {
+        ActiveHealthBar = CreateWidget<UYWorldUserWidget>(GetWorld(), HealthBarWidgetClass);
+        if (ActiveHealthBar)
+        {
+            ActiveHealthBar->AttachedActor = this;
+            ActiveHealthBar->AddToViewport();
+        }
+    }
+}
+
+void AYAICharacter::ShowPlayerSpottedWidget()
+{
+    if (PlayerSpottedWidget == nullptr)
+    {
+        PlayerSpottedWidget = CreateWidget<UYWorldUserWidget>(GetWorld(), SpottedWidgetClass);
+        if (PlayerSpottedWidget)
+        {
+            PlayerSpottedWidget->AttachedActor = this;
+            PlayerSpottedWidget->AddToViewport();
+        }
     }
 }
 

@@ -7,6 +7,8 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Components/AudioComponent.h"
 #include "YGameplayFunctionLibrary.h"
+#include "YActionComponent.h"
+#include "YActionEffect.h"
 
 // Sets default values
 AYMagicProjectile::AYMagicProjectile()
@@ -17,16 +19,33 @@ AYMagicProjectile::AYMagicProjectile()
 
 	MovementComp->InitialSpeed = 2000.0f;
 	Damage = 20.0f;
+
+	ImpactShakeInnerRadius = 0.0f;
+	ImpactShakeOuterRadius = 1500.0f;
 }
 
 void AYMagicProjectile::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor && OtherActor != GetInstigator())
 	{
+		UYActionComponent* ActionComp = Cast<UYActionComponent>(OtherActor->GetComponentByClass(UYActionComponent::StaticClass()));
+		if (ActionComp && ActionComp->ActiveGameplayTags.HasTag(ParryTag))
+		{
+			MovementComp->Velocity = -MovementComp->Velocity;
+
+			SetInstigator(Cast<APawn>(OtherActor));
+			return;
+		}
+
 		UE_LOG(LogTemp, Warning, TEXT("The Projectile %s damage the %s, at game time %f"), *GetNameSafe(this), *GetNameSafe(OtherActor), GetWorld()->TimeSeconds);
 		if (UYGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor, Damage, SweepResult))
 		{
 			Explode();
+
+			if (ActionComp)
+			{
+				ActionComp->AddAction(GetInstigator(), BurningActionClass);
+			}
 		}
 	}
 }
@@ -54,6 +73,8 @@ void AYMagicProjectile::Explode()
 	Super::Explode();
 	
 	ExplodeEffectComp->ActivateSystem(true);
+	UGameplayStatics::PlayWorldCameraShake(this, ImpactShake, GetActorLocation(), ImpactShakeInnerRadius, ImpactShakeOuterRadius);
+
 
 	FTimerHandle TimerHandle_Die;
 	GetWorldTimerManager().SetTimer(TimerHandle_Die, this, &AYMagicProjectile::Die, 1.0f);

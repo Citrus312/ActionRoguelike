@@ -9,6 +9,7 @@
 #include "EngineUtils.h"
 #include "DrawDebugHelpers.h"
 #include "YCharacter.h"
+#include "YPlayerState.h"
 
 
 static TAutoConsoleVariable<bool> CVarSpawnBots(TEXT("su.SpawnBots"), true, TEXT("Enable spawning of bots via timer."), ECVF_Cheat);
@@ -16,6 +17,10 @@ static TAutoConsoleVariable<bool> CVarSpawnBots(TEXT("su.SpawnBots"), true, TEXT
 AYGameModeBase::AYGameModeBase()
 {
 	SpawnTimerInterval = 2.0f;
+
+	CreditsPerKill = 10;
+
+	PlayerStateClass = AYPlayerState::StaticClass();
 }
 
 void AYGameModeBase::StartPlay()
@@ -40,6 +45,7 @@ void AYGameModeBase::KillAll()
 
 void AYGameModeBase::OnActorKilled(AActor* VictimActor, AActor* Killer)
 {
+	// Respawn the Player
 	AYCharacter* Player = Cast<AYCharacter>(VictimActor);
 	if (Player)
 	{
@@ -48,8 +54,18 @@ void AYGameModeBase::OnActorKilled(AActor* VictimActor, AActor* Killer)
 		FTimerDelegate Delegate;
 		Delegate.BindUFunction(this, "Respawn_TimeElapsed", Player->GetController());
 
-		float RespawnDealy = 2.0f;
+		float RespawnDealy = 5.0f;
 		GetWorldTimerManager().SetTimer(TimerHandle_RespawnDelay, Delegate, RespawnDealy, false);
+	}
+
+	// Give Credits for kill
+	APawn* KillerPawn = Cast<APawn>(Killer);
+	if (KillerPawn)
+	{
+		if (AYPlayerState* PS = KillerPawn->GetPlayerState<AYPlayerState>())
+		{
+			PS->AddCredits(CreditsPerKill);
+		}
 	}
 }
 

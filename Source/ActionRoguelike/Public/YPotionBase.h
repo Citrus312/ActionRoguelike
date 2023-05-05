@@ -9,10 +9,11 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/AudioComponent.h"
 #include "YAttributeComponent.h"
+#include "YGameplayInterface.h"
 #include "YPotionBase.generated.h"
 
 UCLASS()
-class ACTIONROGUELIKE_API AYPotionBase : public AActor
+class ACTIONROGUELIKE_API AYPotionBase : public AActor, public IYGameplayInterface
 {
 	GENERATED_BODY()
 	
@@ -37,14 +38,6 @@ protected:
 	UAudioComponent* ConsumeAudioComp;
 
 	virtual void PostInitializeComponents() override;
-
-	UFUNCTION() //一定要加，否则无效
-	virtual void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,    //触发时间的主体，通常是控制的人
-		UPrimitiveComponent* OterComp,
-		int32 OtherBodyIndex,
-		bool bFromSweep,
-		const FHitResult& SweepResult);
 
 	UFUNCTION()
 	virtual void ShowPowerup();

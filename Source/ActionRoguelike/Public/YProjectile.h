@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "DrawDebugHelpers.h"
 #include "YAttributeComponent.h"
+#include "Camera/CameraShake.h"
+#include "Kismet/GameplayStatics.h"
 #include "YProjectile.generated.h"
 
 class USphereComponent;

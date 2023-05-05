@@ -11,6 +11,7 @@
 class UPawnSensingComponent;
 class UUserWidget;
 class UYWorldUserWidget;
+class UYActionComponent;
 
 UCLASS()
 class ACTIONROGUELIKE_API AYAICharacter : public ACharacter
@@ -26,16 +27,23 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> HealthBarWidgetClass;
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> SpottedWidgetClass;
+
 	UYWorldUserWidget* ActiveHealthBar;
+	UYWorldUserWidget* PlayerSpottedWidget;
 
 	UPROPERTY(VisibleAnywhere, Category = "Effect")
 	FName TimeToHitParaName;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Components")
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UYAttributeComponent* AttributeComp;
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UPawnSensingComponent* PawnSensingComp;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UYActionComponent* ActionComp;
 
 	virtual void PostInitializeComponents() override;
 
@@ -43,6 +51,9 @@ protected:
 	void OnHealthChanged(AActor* InstigatorActor, UYAttributeComponent* OwningComp, float NewHealth, float Delta);
 
 	void SetTargetActor(AActor* NewTarget);
+
+	void ShowHealthBar();
+	void ShowPlayerSpottedWidget();
 
 	UFUNCTION()
 	void OnPawnSeen(APawn* Pawn);

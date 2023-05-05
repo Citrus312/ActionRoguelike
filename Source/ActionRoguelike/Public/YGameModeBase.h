@@ -42,6 +42,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	float SpawnTimerInterval;
 
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	int32 CreditsPerKill;
+
 	bool CheckBotCapicity();
 	void SpawnBot_TimeElapsed();
 
