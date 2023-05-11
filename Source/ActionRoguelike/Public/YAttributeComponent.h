@@ -7,7 +7,7 @@
 #include "Math/UnrealMathUtility.h"
 #include "YAttributeComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnHealthChanged, AActor*, InstigatorActor, UYAttributeComponent*, OwningComp, float, NewHealth, float, Delta);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnAttributeChanged, AActor*, InstigatorActor, UYAttributeComponent*, OwningComp, float, NewValue, float, Delta);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ACTIONROGUELIKE_API UYAttributeComponent : public UActorComponent
@@ -25,10 +25,10 @@ public:
 	static bool IsActorAlive(AActor* FromActor);
 
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated, Category = "Attributes")
 	float Health;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated, Category = "Attributes")
 	float HealthMax;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
@@ -40,7 +40,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
 	float RageConvertRatio;
 
-	
+	// @FIXME: mark as unreliable once we moved the 'state' our of YCharacter
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastHealthChanged(AActor* InstigatorActor, float NewHealth, float Delta);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastRageChanged(AActor* InstigatorActor, float NewRage, float Delta);
 
 public:	
 	UFUNCTION(BlueprintCallable)
@@ -65,11 +70,15 @@ public:
 	void ClearRage();
 
 	UPROPERTY(BlueprintAssignable)
-	FOnHealthChanged OnHealthChanged;
+	FOnAttributeChanged OnHealthChanged;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnAttributeChanged OnRageChanged;
 
 	UFUNCTION(BlueprintCallable, Category = "Attribute")
-	bool ApplyHealthChange(AActor* Instigator,float Delta);
+	bool ApplyHealthChange(AActor* Instigator, float Delta);
 
-	
+	UFUNCTION(BlueprintCallable, Category = "Attribute")
+	bool ApplyRageChange(AActor* Instigator,float Delta);
 
 };

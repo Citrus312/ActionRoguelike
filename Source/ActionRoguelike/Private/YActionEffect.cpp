@@ -52,5 +52,5 @@ void UYActionEffect::StopAction_Implementation(AActor* Instigator)
 void UYActionEffect::ExecutePeriodEffect_Implementation(AActor* Instigator)
 {
 	FString DebugMsg = "Action Effect " + GetNameSafe(this) + " execute!";
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::White,  DebugMsg);
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::White,  DebugMsg);
 }

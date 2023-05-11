@@ -36,6 +36,8 @@ AYProjectile::AYProjectile()
 	ExplodeAudioComp->bAutoActivate = false;
 	ExplodeAudioComp->SetupAttachment(RootComponent);
 	ExplodeAudioComp->OnAudioFinished.AddDynamic(this, &AYProjectile::OnExplodeAudioFinished);
+
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned

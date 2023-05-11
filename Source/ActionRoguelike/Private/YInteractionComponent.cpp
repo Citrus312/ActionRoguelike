@@ -6,7 +6,7 @@
 #include "DrawDebugHelpers.h"
 #include "YWorldUserWidget.h"
 
-static TAutoConsoleVariable<bool> CVarDebugDrawInteraction(TEXT("su.InteractionDebugDraw"), false, TEXT("Enable drawing debug of interaction."), ECVF_Cheat);
+static TAutoConsoleVariable<bool> CVarDebugDrawInteraction(TEXT("su.InteractionDebugDraw"), true, TEXT("Enable drawing debug of interaction."), ECVF_Cheat);
 
 // Sets default values for this component's properties
 UYInteractionComponent::UYInteractionComponent()
@@ -87,8 +87,21 @@ void UYInteractionComponent::FindBestInteract()
 
 	if (bDebugDraw)
 	{
-		DrawDebugLine(GetWorld(), EyeLocation, End, LineColor, false, 2.0f, 0, 2.0f);
+		DrawDebugLine(GetWorld(), EyeLocation, End, LineColor, false, 0.0f, 0, 2.0f);
 	}
+}
+
+void UYInteractionComponent::ServerInteract_Implementation(AActor* InFocus)
+{
+	if (InFocus == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "No Focus Actor to interact.");
+		return;
+	}
+
+	APawn* MyPawn = Cast<APawn>(GetOwner());
+
+	IYGameplayInterface::Execute_Interact(InFocus, MyPawn);
 }
 
 // Called when the game starts
@@ -106,19 +119,15 @@ void UYInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	FindBestInteract();
+	APawn* MyPawn = Cast<APawn>(GetOwner());
+	if (MyPawn->IsLocallyControlled())
+	{
+		FindBestInteract();
+	}
 }
 
 void UYInteractionComponent::PrimaryInteract()
 {
-	if (FocusActor == nullptr)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "No Focus Actor to interact.");
-		return;
-	}
-
-	APawn* MyPawn = Cast<APawn>(GetOwner());
-
-	IYGameplayInterface::Execute_Interact(FocusActor, MyPawn);
+	ServerInteract(FocusActor);
 }
 

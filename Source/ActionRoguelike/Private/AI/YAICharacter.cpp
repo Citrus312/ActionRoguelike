@@ -109,8 +109,18 @@ void AYAICharacter::ShowPlayerSpottedWidget()
         if (PlayerSpottedWidget)
         {
             PlayerSpottedWidget->AttachedActor = this;
-            PlayerSpottedWidget->AddToViewport();
+            PlayerSpottedWidget->AddToViewport(10);
+            FTimerHandle TimerHanlde_PlayerSpotted;
+            GetWorld()->GetTimerManager().SetTimer(TimerHanlde_PlayerSpotted, this, &AYAICharacter::RemovePlayerSpottedWidget, 2.0f);
         }
+    }
+}
+
+void AYAICharacter::RemovePlayerSpottedWidget()
+{
+    if (PlayerSpottedWidget)
+    {
+        PlayerSpottedWidget->RemoveFromViewport();
     }
 }
 

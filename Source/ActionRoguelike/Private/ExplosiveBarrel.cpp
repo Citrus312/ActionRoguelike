@@ -50,4 +50,8 @@ void AExplosiveBarrel::OnActorHit(UPrimitiveComponent* HitComp, AActor* OtherAct
 void AExplosiveBarrel::Explode()
 {
 	ForceComp->FireImpulse();
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
+
+	SetLifeSpan(2.0f);
 }

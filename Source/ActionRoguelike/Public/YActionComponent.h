@@ -35,15 +35,23 @@ public:
 
 protected:
 
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	TArray<UYAction*> Actions;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Actions")
 	TArray<TSubclassOf<UYAction>>DefaultActions;
 
+	UFUNCTION(Server, Reliable)
+	void ServerStartAction(AActor* Instigator, FName ActionName);
+
+	UFUNCTION(Server, Reliable)
+	void ServerStopAction(AActor* Instigator, FName ActionName);
+
 	virtual void BeginPlay() override;
 
 public:	
+
+	bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 

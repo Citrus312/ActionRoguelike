@@ -3,15 +3,34 @@
 
 #include "YAction.h"
 #include "YActionComponent.h"
+#include "../ActionRoguelike.h"
+#include "Net/UnrealNetwork.h"
+
+void UYAction::OnRep_RepData()
+{
+	if (RepData.bIsRunning)
+	{
+		StartAction(RepData.Instigator);
+	}
+	else
+	{
+		StopAction(RepData.Instigator);
+	}
+}
 
 UYActionComponent* UYAction::GetOwningComponent() const
 {
-	return Cast<UYActionComponent>(GetOuter());
+	return ActionComp;
+}
+
+void UYAction::Initialize(UYActionComponent* NewActionComp)
+{
+	ActionComp = NewActionComp;
 }
 
 bool UYAction::IsRunning() const
 {
-	return bIsRunning;
+	return RepData.bIsRunning;
 }
 
 bool UYAction::CanStart_Implementation(AActor* Instigator)
@@ -32,32 +51,37 @@ bool UYAction::CanStart_Implementation(AActor* Instigator)
 
 void UYAction::StartAction_Implementation(AActor* Instigator)
 {
-	UE_LOG(LogTemp, Log, TEXT("Running: %s"), *GetNameSafe(this));
 
 	UYActionComponent* Comp = GetOwningComponent();
 	Comp->ActiveGameplayTags.AppendTags(GrantsTags);
 
-	bIsRunning = true;
+	RepData.bIsRunning = true;
+	RepData.Instigator = Instigator;
 }
 
 void UYAction::StopAction_Implementation(AActor* Instigator)
 {
-	UE_LOG(LogTemp, Log, TEXT("Stopped: %s"), *GetNameSafe(this));
-
-	ensureAlways(bIsRunning);
 
 	UYActionComponent* Comp = GetOwningComponent();
 	Comp->ActiveGameplayTags.RemoveTags(GrantsTags);
 
-	bIsRunning = false;
+	RepData.bIsRunning = false;
 }
 
 UWorld* UYAction::GetWorld() const
 {
-	UYActionComponent* Comp = Cast<UYActionComponent>(GetOuter());
-	if (Comp)
+	AActor* Actor = Cast<AActor>(GetOuter());
+	if (Actor)
 	{
-		return Comp->GetWorld();
+		return Actor->GetWorld();
 	}
 	return nullptr;
+}
+
+void UYAction::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UYAction, RepData);
+	DOREPLIFETIME(UYAction, ActionComp);
 }

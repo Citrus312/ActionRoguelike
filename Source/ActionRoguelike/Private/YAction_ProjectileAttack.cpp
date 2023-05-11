@@ -76,9 +76,12 @@ void UYAction_ProjectileAttack::StartAction_Implementation(AActor* Instigator)
 	{
 		Character->PlayAnimMontage(AttackAnim);
 
-		FTimerDelegate Delegate;
-		Delegate.BindUFunction(this, "AttackDelay_Elapsed", Character);
+		if (Character->HasAuthority())
+		{
+			FTimerDelegate Delegate;
+			Delegate.BindUFunction(this, "AttackDelay_Elapsed", Character);
 
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle_AttackDelay, Delegate, AttackAnimDelay, false);
+			GetWorld()->GetTimerManager().SetTimer(TimerHandle_AttackDelay, Delegate, AttackAnimDelay, false);
+		}
 	}
 }

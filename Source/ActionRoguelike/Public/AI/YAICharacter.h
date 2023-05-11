@@ -54,6 +54,7 @@ protected:
 
 	void ShowHealthBar();
 	void ShowPlayerSpottedWidget();
+	void RemovePlayerSpottedWidget();
 
 	UFUNCTION()
 	void OnPawnSeen(APawn* Pawn);

@@ -37,12 +37,15 @@ void AYMagicProjectile::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedC
 			return;
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("The Projectile %s damage the %s, at game time %f"), *GetNameSafe(this), *GetNameSafe(OtherActor), GetWorld()->TimeSeconds);
+		//UE_LOG(LogTemp, Warning, TEXT("The Projectile %s damage the %s, at game time %f"), *GetNameSafe(this), *GetNameSafe(OtherActor), GetWorld()->TimeSeconds);
 		if (UYGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor, Damage, SweepResult))
 		{
+			// Rage
+			UYGameplayFunctionLibrary::ApplyRage(GetInstigator(), OtherActor, 1.0f);
+
 			Explode();
 
-			if (ActionComp)
+			if (ActionComp && HasAuthority())
 			{
 				ActionComp->AddAction(GetInstigator(), BurningActionClass);
 			}

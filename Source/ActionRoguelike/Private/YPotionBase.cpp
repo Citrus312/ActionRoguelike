@@ -18,6 +18,8 @@ AYPotionBase::AYPotionBase()
 	ConsumeAudioComp->SetupAttachment(RootComponent);
 
 	RespawnTime = 10.0f;
+
+	bReplicates = true;
 }
 
 void AYPotionBase::PostInitializeComponents()

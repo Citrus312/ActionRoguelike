@@ -52,6 +52,7 @@ void AYCharacter::BeginPlay()
 	GetWorld()->GetFirstPlayerController()->PlayerCameraManager->ViewPitchMin = -50.0f;
 
 	AttributeComp->OnHealthChanged.AddDynamic(this, &AYCharacter::OnHealthChanged);
+	AttributeComp->OnRageChanged.AddDynamic(this, &AYCharacter::OnRageChanged);
 }
 
 // Called every frame
@@ -142,17 +143,18 @@ void AYCharacter::PrimaryAttack()
 //¸ß¼¶¹¥»÷
 void AYCharacter::AdvancedAttack()
 {
-	if (AttributeComp->IsRageMax())
-	{
-		if (ActionComp->StartActionByName(this, "AdvancedAttack"))
-		{
-			AttributeComp->ClearRage();
-		}
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, "Rage Not Enough");
-	}
+	ActionComp->StartActionByName(this, "AdvancedAttack");
+// 	if (AttributeComp->IsRageMax())
+// 	{
+// 		if (ActionComp->StartActionByName(this, "AdvancedAttack"))
+// 		{
+// 			AttributeComp->ClearRage();
+// 		}
+// 	}
+// 	else
+// 	{
+// 		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, "Rage Not Enough");
+// 	}
 }
 
 //´«ËÍ
@@ -175,17 +177,28 @@ void AYCharacter::OnHealthChanged(AActor* InstigatorActor, UYAttributeComponent*
 	if (Delta < 0.0f)
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("Character Flash"));
+		FString DebugMsg = GetNameSafe(InstigatorActor) + " hit " + GetNameSafe(this) + ", Damage : "+ FString::SanitizeFloat(Delta);
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White,  DebugMsg);
 		GetMesh()->SetScalarParameterValueOnMaterials("TimeToHit", GetWorld()->TimeSeconds);
 		
-		AttributeComp->AddRage(Delta);
 
 		if (NewHealth <= 0.0f)
 		{
 			APlayerController* PC = Cast<APlayerController>(GetController());
 			DisableInput(PC);
-			SetActorEnableCollision(false);
+			//SetActorEnableCollision(false);
 			GetMesh()->SetScalarParameterValueOnMaterials("TimeDissolve", GetWorld()->TimeSeconds);
+
+			SetLifeSpan(5.0f);
 		}
+	}
+}
+
+void AYCharacter::OnRageChanged(AActor* InstigatorActor, UYAttributeComponent* OwningComp, float NewRage, float Delta)
+{
+	if (OwningComp->IsRageMax())
+	{
+		// Some effect
 	}
 }
 

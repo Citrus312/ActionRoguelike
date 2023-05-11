@@ -38,6 +38,10 @@ protected:
 	UYWorldUserWidget* DefaultWidgetInstance;
 
 	void FindBestInteract();
+
+	//RPC server
+	UFUNCTION(Server, Reliable)
+	void ServerInteract(AActor* InFocus);
 	
 	virtual void BeginPlay() override;
 

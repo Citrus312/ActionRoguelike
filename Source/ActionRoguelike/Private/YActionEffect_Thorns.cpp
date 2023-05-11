@@ -12,6 +12,7 @@ void UYActionEffect_Thorns::OnHealthChanged(AActor* InstigatorActor, UYAttribute
 	{
 		float Damage = round(-Delta * ThornsConvertRatio);
 		UYGameplayFunctionLibrary::ApplyDamage(GetOwningComponent()->GetOwner(), InstigatorActor, Damage);
+		UYGameplayFunctionLibrary::ApplyRage(GetOwningComponent()->GetOwner(), InstigatorActor, 1.0f);
 	}
 }
 
@@ -45,8 +46,8 @@ void UYActionEffect_Thorns::StartAction_Implementation(AActor* Instigator)
 			if (UYAttributeComponent* AttributeComp = UYAttributeComponent::GetAttributes(MyActor))
 			{
 				AttributeComp->OnHealthChanged.AddDynamic(this, &UYActionEffect_Thorns::OnHealthChanged);
-				FString DebugMsg = "Action Effect " + GetNameSafe(this) + " bind!";
-				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::White, DebugMsg);
+// 				FString DebugMsg = "Action Effect " + GetNameSafe(this) + " bind!";
+// 				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::White, DebugMsg);
 			}
 		}
 	}

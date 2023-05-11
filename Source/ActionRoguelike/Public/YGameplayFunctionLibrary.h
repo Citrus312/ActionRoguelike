@@ -20,5 +20,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Gameplay")
 	static bool ApplyDirectionalDamage(AActor* DamageCauser, AActor* TargetActor, float DamageAmount, const FHitResult& HitResult);
+
+	UFUNCTION(BlueprintCallable, Category = "Gameplay")
+	static bool ApplyRage(AActor* RageCauser, AActor* TargetActor, float RageAmount);
 	
 };

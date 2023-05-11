@@ -57,6 +57,9 @@ protected:
 	UFUNCTION()
 	void OnHealthChanged(AActor* InstigatorActor, UYAttributeComponent* OwningComp, float NewHealth, float Delta);
 
+	UFUNCTION()
+	void OnRageChanged(AActor* InstigatorActor, UYAttributeComponent* OwningComp, float NewRage, float Delta);
+
 	UFUNCTION(Exec)
 	void HealSelf(float Amount = 100);
 

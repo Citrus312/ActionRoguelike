@@ -3,6 +3,7 @@
 
 #include "YAttributeComponent.h"
 #include "YGameModeBase.h"
+#include "Net/UnrealNetwork.h"
 
 
 static TAutoConsoleVariable<float> CVarDamageMultiplier(TEXT("su.DamageMultiplier"), 1.0f, TEXT("Global Damage Modifier for Attribute Component."), ECVF_Cheat);
@@ -15,6 +16,8 @@ UYAttributeComponent::UYAttributeComponent()
 	RageMax = 10.0f;
 	Rage = 0.0f;
 	RageConvertRatio = 0.25f;
+
+	SetIsReplicatedByDefault(true);
 }
 
 UYAttributeComponent* UYAttributeComponent::GetAttributes(AActor* FromActor)
@@ -26,13 +29,12 @@ UYAttributeComponent* UYAttributeComponent::GetAttributes(AActor* FromActor)
 	return nullptr;
 }
 
-bool UYAttributeComponent::AddRage(float Damage)
+bool UYAttributeComponent::AddRage(float Delta)
 {
-	if (Damage < 0.0f)
+	if (Delta > 0.0f)
 	{
-		Damage = abs(Damage);
-		float Delta = round(Damage * RageConvertRatio);
-		Rage = FMath::Clamp(Rage + Delta, 0.0f, RageMax);
+		float DeltaRage = round(Delta * RageConvertRatio);
+		Rage = FMath::Clamp(Rage + DeltaRage, 0.0f, RageMax);
 		return true;
 	}
 	return false;
@@ -46,6 +48,16 @@ bool UYAttributeComponent::IsRageMax() const
 void UYAttributeComponent::ClearRage()
 {
 	Rage = 0.0f;
+}
+
+void UYAttributeComponent::MulticastHealthChanged_Implementation(AActor* InstigatorActor, float NewHealth, float Delta)
+{
+	OnHealthChanged.Broadcast(InstigatorActor, this, NewHealth, Delta);
+}
+
+void UYAttributeComponent::MulticastRageChanged_Implementation(AActor* InstigatorActor, float NewRage, float Delta)
+{
+	OnRageChanged.Broadcast(InstigatorActor, this, NewRage, Delta);
 }
 
 bool UYAttributeComponent::IsAlive() const
@@ -91,18 +103,42 @@ bool UYAttributeComponent::ApplyHealthChange(AActor* Instigator, float Delta)
 		Delta *= DamageMultiplier;
 	}
 
-	Health = FMath::Clamp(Health + Delta, 0.0f, HealthMax);
+	float OldHealth = Health;
+	float NewHealth = FMath::Clamp(Health + Delta, 0.0f, HealthMax);
 
-	OnHealthChanged.Broadcast(Instigator, this, Health, Delta);
-
-	if (Health == 0.0f && Delta < 0.0f)
+	if (GetOwner()->HasAuthority())
 	{
-		AYGameModeBase* GM = GetWorld()->GetAuthGameMode<AYGameModeBase>();
-		if (GM)
+		Health = NewHealth;
+
+		if (NewHealth != OldHealth)
 		{
-			GM->OnActorKilled(GetOwner(), Instigator);
+			MulticastHealthChanged(Instigator, Health, Delta);
+		}
+
+		// Died
+		if (Health == 0.0f && Delta < 0.0f)
+		{
+			AYGameModeBase* GM = GetWorld()->GetAuthGameMode<AYGameModeBase>();
+			if (GM)
+			{
+				GM->OnActorKilled(GetOwner(), Instigator);
+			}
 		}
 	}
+	
+	return OldHealth != NewHealth;
+}
+
+bool UYAttributeComponent::ApplyRageChange(AActor* Instigator, float Delta)
+{
+	if (!IsAlive())
+	{
+		return false;
+	}
+
+	Rage = FMath::Clamp(Rage + Delta, 0.0f, RageMax);
+
+	MulticastRageChanged(Instigator, Rage, Delta);
 
 	return true;
 }
@@ -110,4 +146,13 @@ bool UYAttributeComponent::ApplyHealthChange(AActor* Instigator, float Delta)
 bool UYAttributeComponent::Kill(AActor* Instigator)
 {
 	return ApplyHealthChange(Instigator, -GetHealthMax());
+}
+
+void UYAttributeComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UYAttributeComponent, Health);
+	DOREPLIFETIME(UYAttributeComponent, HealthMax);
+	//DOREPLIFETIME_CONDITION(UYAttributeComponent, HealthMax, COND_OwnerOnly);
 }

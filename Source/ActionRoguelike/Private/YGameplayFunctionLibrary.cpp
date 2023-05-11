@@ -27,3 +27,13 @@ bool UYGameplayFunctionLibrary::ApplyDirectionalDamage(AActor* DamageCauser, AAc
 	}
 	return false;
 }
+
+bool UYGameplayFunctionLibrary::ApplyRage(AActor* RageCauser, AActor* TargetActor, float RageAmount)
+{
+	UYAttributeComponent* AttributeComp = UYAttributeComponent::GetAttributes(TargetActor);
+	if (AttributeComp)
+	{
+		return AttributeComp->ApplyRageChange(RageCauser, RageAmount);
+	}
+	return false;
+}
